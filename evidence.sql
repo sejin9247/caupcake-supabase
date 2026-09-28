@@ -33,3 +33,13 @@ create policy "evidence_insert_public"
 create extension if not exists pg_trgm with schema extensions;
 create index if not exists evidence_item_trgm   on public.evidence using gin (item   extensions.gin_trgm_ops);
 create index if not exists evidence_source_trgm on public.evidence using gin (source extensions.gin_trgm_ops);
+
+-- 5) 지역 검색: region 열 + 지역 목록 뷰 (전국 시·군 조례 수집분은 scripts/fetch_ordinances.js)
+alter table public.evidence add column if not exists region text;
+create index if not exists evidence_region_idx  on public.evidence (region);
+create index if not exists evidence_region_trgm on public.evidence using gin (region extensions.gin_trgm_ops);
+
+create or replace view public.evidence_regions with (security_invoker = true) as
+  select region, count(*)::int as n, max(queried_on) as latest
+  from public.evidence where region is not null group by region;
+grant select on public.evidence_regions to anon, authenticated;

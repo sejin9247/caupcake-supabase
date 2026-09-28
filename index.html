@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>근거노트 대시보드</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f4f6fa; --surface: #ffffff; --surface-2: #eef2f8; --border: #d5deea;
+    --text: #1d2330; --text-2: #52596a; --muted: #7a8292; --accent: #1c3d6e;
+    --series-1: #2a78d6; --err: #c1121f; --ok: #0f7a3d;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #121417; --surface: #1a1c20; --surface-2: #23262c; --border: #33373f;
+      --text: #f2f3f5; --text-2: #c3c6cd; --muted: #8d93a0; --accent: #9dbdf0;
+      --series-1: #3987e5; --err: #ff6b6b; --ok: #4cc27e;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 22px; margin: 0 0 2px; color: var(--accent); }
+  h2 { font-size: 15px; margin: 0 0 10px; color: var(--accent); }
+  .sub { color: var(--text-2); font-size: 12.5px; margin: 0 0 18px; }
+  .box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+  .grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+  .grid2 > .box { margin-bottom: 0; }
+  .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .tile .k { font-size: 12px; color: var(--text-2); }
+  .tile .v { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .tile .n { font-size: 11.5px; color: var(--muted); }
+  form.f { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px; }
+  label { display: flex; flex-direction: column; font-size: 12px; font-weight: 600; color: var(--accent); gap: 3px; }
+  .wide { grid-column: 1 / -1; }
+  input { font: inherit; color: var(--text); background: var(--surface); padding: 7px 9px; border: 1px solid var(--border); border-radius: 6px; min-width: 0; }
+  input:disabled { background: var(--surface-2); color: var(--muted); }
+  .btn { font: inherit; padding: 7px 14px; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); border-radius: 6px; cursor: pointer; }
+  .btn.ghost { background: transparent; color: var(--accent); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .status { font-size: 12px; color: var(--text-2); min-height: 1.2em; margin-top: 6px; }
+  .status.err { color: var(--err); }
+  .status.ok { color: var(--ok); }
+  .who { font-size: 13px; }
+  .note { font-size: 11.5px; color: var(--muted); margin-top: 8px; }
+  /* chart */
+  .chart { position: relative; }
+  .bar-row { display: grid; grid-template-columns: 120px minmax(0, 1fr) 52px; align-items: center; gap: 8px; height: 22px; }
+  .bar-row + .bar-row { margin-top: 2px; }
+  .bar-label { font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-track { position: relative; height: 100%; display: flex; align-items: center; }
+  .bar { height: 14px; background: var(--series-1); border-radius: 0 4px 4px 0; min-width: 2px; }
+  .bar-row:hover .bar, .bar-row:focus .bar { filter: brightness(1.15); }
+  .bar-row:hover .bar-label { color: var(--text); }
+  .bar-val { font-size: 12px; color: var(--text); text-align: right; font-variant-numeric: tabular-nums; }
+  .tip { position: absolute; pointer-events: none; background: var(--text); color: var(--bg); font-size: 12px; padding: 6px 8px; border-radius: 6px; max-width: 280px; opacity: 0; transition: opacity .1s; z-index: 5; }
+  /* table */
+  .tbl-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--text-2); font-weight: 600; background: var(--surface-2); position: sticky; top: 0; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.src { color: var(--text-2); min-width: 260px; }
+  td.date { white-space: nowrap; }
+  tr.new td { background: color-mix(in srgb, var(--series-1) 12%, transparent); }
+  .scroll { max-height: 460px; overflow-y: auto; }
+  @media (max-width: 760px) {
+    .grid2 { grid-template-columns: 1fr; }
+    .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    form.f { grid-template-columns: 1fr; }
+    .bar-row { grid-template-columns: 96px minmax(0, 1fr) 46px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>근거노트 대시보드</h1>
+  <p class="sub">Team LUOGO · 대상지 상명대학교 천안캠퍼스 · Supabase <code>evidence</code> 표에서 불러온 값만 그립니다 (화면 변수가 아니라 서버의 행)</p>
+
+  <div class="tiles">
+    <div class="tile"><div class="k">저장된 근거 행</div><div class="v" id="tRows">–</div><div class="n">evidence 표 전체</div></div>
+    <div class="tile"><div class="k">출처 조문 수</div><div class="v" id="tSrc">–</div><div class="n">서로 다른 source</div></div>
+    <div class="tile"><div class="k">가장 최근 조회일</div><div class="v" id="tNew">–</div><div class="n">queried_on 최댓값</div></div>
+    <div class="tile"><div class="k">가장 오래된 조회일</div><div class="v" id="tOld">–</div><div class="n">재조회 대상 후보</div></div>
+  </div>
+
+  <div class="grid2">
+    <section class="box">
+      <h2>천안시 용도지역별 용적률 상한 (조례)</h2>
+      <div class="chart" id="chart"><div class="status">불러오는 중…</div></div>
+      <div class="tip" id="tip" role="tooltip"></div>
+      <p class="note">단위 % · 「천안시 도시계획 조례」 제61조 · value 열이 numeric 이라 큰 순서 정렬과 평균이 가능함</p>
+    </section>
+
+    <section class="box">
+      <h2>새 근거값 저장</h2>
+      <div id="authBox">
+        <div class="row" id="authOut">
+          <input id="email" type="email" placeholder="팀원 이메일" autocomplete="username" style="flex:1 1 160px">
+          <input id="pw" type="password" placeholder="비밀번호 (6자 이상)" autocomplete="current-password" style="flex:1 1 140px">
+          <button class="btn" id="btnIn" type="button">로그인</button>
+          <button class="btn ghost" id="btnUp" type="button">가입</button>
+        </div>
+        <div class="row" id="authIn" hidden>
+          <span class="who" id="who"></span>
+          <button class="btn ghost" id="btnOut" type="button">로그아웃</button>
+        </div>
+        <div class="status" id="authStatus">저장은 로그인한 팀원만 가능 (RLS insert 정책). 목록 보기는 누구나 가능.</div>
+      </div>
+      <hr style="border:0;border-top:1px solid var(--border);margin:12px 0">
+      <form class="f" id="f">
+        <label class="wide">항목 (item) <input name="item" required maxlength="100" placeholder="대상지 용도지역 현황 · 상명대 천안캠퍼스"></label>
+        <label>값 (value, 숫자만) <input name="value" type="number" step="any" required placeholder="1"></label>
+        <label>단위 (unit) <input name="unit" required maxlength="30" placeholder="개 / % / ㎡ / 회"></label>
+        <label class="wide">출처 (source) <input name="source" required minlength="5" maxlength="300" placeholder="토지이음 토지이용계획 열람 · 천안시 동남구 ○○동 ○○번지 · 1차/2차자료"></label>
+        <label>조회일 (queried_on) <input name="queried_on" type="date" required></label>
+        <div class="wide"><button class="btn" type="submit" id="btnSave">저장</button><div class="status" id="formStatus"></div></div>
+      </form>
+    </section>
+  </div>
+
+  <section class="box" style="margin-top:14px">
+    <div class="row" style="justify-content:space-between;margin-bottom:8px">
+      <h2 style="margin:0">저장된 근거 행 <span id="listCount" style="color:var(--text-2);font-weight:400"></span></h2>
+      <div class="row">
+        <input id="q" type="search" placeholder="항목·출처 검색" style="width:200px">
+        <button class="btn ghost" id="btnReload" type="button">서버에서 다시 읽기</button>
+      </div>
+    </div>
+    <div class="status" id="listStatus"></div>
+    <div class="tbl-wrap scroll">
+      <table>
+        <thead><tr><th>id</th><th>항목</th><th style="text-align:right">값</th><th>단위</th><th>출처</th><th>조회일</th><th>저장 시각</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+<script>
+// 공개 키(publishable)만 넣음. 비밀 키(secret)는 RLS를 무시하므로 절대 넣지 않음
+const SUPABASE_URL = "https://dwlrjyditdednagjfnpo.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_hx9UHAzdDHLVJwTmsBM-zQ_VKp5h_6A";
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const fmt = n => Number(n).toLocaleString("ko-KR");
+function setStatus(el, msg, kind = "") { el.textContent = msg; el.className = "status" + (kind ? " " + kind : ""); }
+
+const form = $("f");
+const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+form.queried_on.value = today;
+form.queried_on.max = today;
+
+let rows = [], lastNewId = null;
+
+// ---------- 조회 (select) ----------
+async function load() {
+  setStatus($("listStatus"), "서버에서 불러오는 중…");
+  const { data, error } = await db.from("evidence")
+    .select("id, created_at, item, value, unit, source, queried_on")
+    .order("id", { ascending: false });
+  if (error) return setStatus($("listStatus"), `불러오기 실패: ${error.message}`, "err");
+  rows = data;
+  setStatus($("listStatus"), `서버 응답 ${data.length}행 · ${new Date().toLocaleTimeString("ko-KR")}`);
+  renderTiles(); renderChart(); renderTable();
+}
+
+function renderTiles() {
+  $("tRows").textContent = fmt(rows.length);
+  $("tSrc").textContent = fmt(new Set(rows.map(r => r.source)).size);
+  const ds = rows.map(r => r.queried_on).sort();
+  $("tNew").textContent = ds.length ? ds[ds.length - 1].slice(5) : "–";
+  $("tOld").textContent = ds.length ? ds[0].slice(5) : "–";
+  $("tNew").title = ds[ds.length - 1] || ""; $("tOld").title = ds[0] || "";
+}
+
+function renderChart() {
+  const far = rows.filter(r => r.item.endsWith("용적률") && r.unit === "%" && r.source.includes("천안시 도시계획 조례"));
+  // 같은 항목이 여럿이면 가장 최근 조회일 행만
+  const byItem = new Map();
+  for (const r of far) { const p = byItem.get(r.item); if (!p || r.queried_on > p.queried_on) byItem.set(r.item, r); }
+  const list = [...byItem.values()].sort((a, b) => b.value - a.value);
+  if (!list.length) return $("chart").innerHTML = `<div class="status">용적률 행이 없습니다.</div>`;
+  const max = Math.max(...list.map(r => +r.value));
+  $("chart").innerHTML = list.map(r => `
+    <div class="bar-row" tabindex="0" data-id="${r.id}">
+      <div class="bar-label">${esc(r.item.replace(/ 용적률$/, ""))}</div>
+      <div class="bar-track"><div class="bar" style="width:${(r.value / max * 100).toFixed(2)}%"></div></div>
+      <div class="bar-val">${fmt(r.value)}</div>
+    </div>`).join("");
+  const tip = $("tip"), box = $("chart").parentElement;
+  $("chart").querySelectorAll(".bar-row").forEach(el => {
+    const r = list.find(x => String(x.id) === el.dataset.id);
+    const show = () => {
+      tip.innerHTML = `<b>${esc(r.item)}</b><br>${fmt(r.value)} ${esc(r.unit)}<br>${esc(r.source)}<br>조회일 ${esc(r.queried_on)}`;
+      const a = el.getBoundingClientRect(), b = box.getBoundingClientRect();
+      tip.style.left = Math.max(8, Math.min(a.left - b.left + 120, b.width - 290)) + "px";
+      tip.style.top = (a.bottom - b.top + 4) + "px";
+      tip.style.opacity = 1;
+    };
+    el.addEventListener("mouseenter", show); el.addEventListener("focus", show);
+    el.addEventListener("mouseleave", () => tip.style.opacity = 0); el.addEventListener("blur", () => tip.style.opacity = 0);
+  });
+}
+
+function renderTable() {
+  const q = $("q").value.trim();
+  const shown = q ? rows.filter(r => (r.item + " " + r.source).includes(q)) : rows;
+  $("listCount").textContent = q ? `${shown.length} / ${rows.length}행` : `${rows.length}행`;
+  $("tbody").innerHTML = shown.length ? shown.map(r => `
+    <tr class="${r.id === lastNewId ? "new" : ""}">
+      <td class="num">${r.id}</td><td>${esc(r.item)}</td><td class="num">${fmt(r.value)}</td><td>${esc(r.unit)}</td>
+      <td class="src">${esc(r.source)}</td><td class="date">${esc(r.queried_on)}</td>
+      <td class="date">${new Date(r.created_at).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short" })}</td>
+    </tr>`).join("") : `<tr><td colspan="7" style="color:var(--muted)">표시할 행이 없습니다.</td></tr>`;
+}
+$("q").addEventListener("input", renderTable);
+$("btnReload").addEventListener("click", load);
+
+// ---------- 로그인 (Supabase Auth) ----------
+function applySession(session) {
+  const on = !!session;
+  $("authOut").hidden = on; $("authIn").hidden = !on;
+  $("who").textContent = on ? `로그인: ${session.user.email}` : "";
+  [...form.elements].forEach(el => el.disabled = !on);
+  setStatus($("formStatus"), on ? "" : "로그인하면 저장할 수 있습니다.");
+}
+db.auth.getSession().then(({ data }) => applySession(data.session));
+db.auth.onAuthStateChange((_e, session) => applySession(session));
+
+$("btnIn").addEventListener("click", async () => {
+  const { error } = await db.auth.signInWithPassword({ email: $("email").value.trim(), password: $("pw").value });
+  setStatus($("authStatus"), error ? `로그인 실패: ${error.message}` : "로그인했습니다.", error ? "err" : "ok");
+});
+$("btnUp").addEventListener("click", async () => {
+  const { data, error } = await db.auth.signUp({
+    email: $("email").value.trim(), password: $("pw").value,
+    options: { emailRedirectTo: location.origin + location.pathname }
+  });
+  if (error) return setStatus($("authStatus"), `가입 실패: ${error.message}`, "err");
+  setStatus($("authStatus"), data.session ? "가입과 로그인이 끝났습니다." : "확인 메일을 보냈습니다. 메일의 링크를 누른 뒤 로그인하세요.", "ok");
+});
+$("btnOut").addEventListener("click", async () => { await db.auth.signOut(); setStatus($("authStatus"), "로그아웃했습니다."); });
+
+// ---------- 저장 (insert → .select()로 새 행 받기) ----------
+form.addEventListener("submit", async e => {
+  e.preventDefault();
+  const fd = new FormData(form);
+  const row = {
+    item: fd.get("item").trim(), value: Number(fd.get("value")), unit: fd.get("unit").trim(),
+    source: fd.get("source").trim(), queried_on: fd.get("queried_on"),
+  };
+  if (!row.item || !row.unit || row.source.length < 5 || !Number.isFinite(row.value))
+    return setStatus($("formStatus"), "네 칸(값·단위·출처·조회일)을 모두 채워야 합니다.", "err");
+  $("btnSave").disabled = true;
+  setStatus($("formStatus"), "저장 중…");
+  const { data, error } = await db.from("evidence").insert(row).select("id, created_at").single();
+  $("btnSave").disabled = false;
+  if (error) return setStatus($("formStatus"), `저장 실패: ${error.message}`, "err");
+  lastNewId = data.id;
+  setStatus($("formStatus"), `저장됨 · id ${data.id} · ${new Date(data.created_at).toLocaleString("ko-KR")} — 새로고침해도 목록에 남아 있어야 합니다.`, "ok");
+  form.reset(); form.queried_on.value = today;
+  load();
+});
+
+load();
+</script>
+</body>
+</html>

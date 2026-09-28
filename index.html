@@ -99,20 +99,7 @@
 
     <section class="box">
       <h2>새 근거값 저장</h2>
-      <div id="authBox">
-        <div class="row" id="authOut">
-          <input id="email" type="email" placeholder="팀원 이메일" autocomplete="username" style="flex:1 1 160px">
-          <input id="pw" type="password" placeholder="비밀번호 (6자 이상)" autocomplete="current-password" style="flex:1 1 140px">
-          <button class="btn" id="btnIn" type="button">로그인</button>
-          <button class="btn ghost" id="btnUp" type="button">가입</button>
-        </div>
-        <div class="row" id="authIn" hidden>
-          <span class="who" id="who"></span>
-          <button class="btn ghost" id="btnOut" type="button">로그아웃</button>
-        </div>
-        <div class="status" id="authStatus">저장은 로그인한 팀원만 가능 (RLS insert 정책). 목록 보기는 누구나 가능.</div>
-      </div>
-      <hr style="border:0;border-top:1px solid var(--border);margin:12px 0">
+      <p class="note" style="margin:0 0 10px">네 칸(값·단위·출처·조회일)을 모두 채워야 저장됨 · 빈 값·5자 미만 출처·미래 조회일은 서버가 거부</p>
       <form class="f" id="f">
         <label class="wide">항목 (item) <input name="item" required maxlength="100" placeholder="대상지 용도지역 현황 · 상명대 천안캠퍼스"></label>
         <label>값 (value, 숫자만) <input name="value" type="number" step="any" required placeholder="1"></label>
@@ -222,31 +209,6 @@ function renderTable() {
 }
 $("q").addEventListener("input", renderTable);
 $("btnReload").addEventListener("click", load);
-
-// ---------- 로그인 (Supabase Auth) ----------
-function applySession(session) {
-  const on = !!session;
-  $("authOut").hidden = on; $("authIn").hidden = !on;
-  $("who").textContent = on ? `로그인: ${session.user.email}` : "";
-  [...form.elements].forEach(el => el.disabled = !on);
-  setStatus($("formStatus"), on ? "" : "로그인하면 저장할 수 있습니다.");
-}
-db.auth.getSession().then(({ data }) => applySession(data.session));
-db.auth.onAuthStateChange((_e, session) => applySession(session));
-
-$("btnIn").addEventListener("click", async () => {
-  const { error } = await db.auth.signInWithPassword({ email: $("email").value.trim(), password: $("pw").value });
-  setStatus($("authStatus"), error ? `로그인 실패: ${error.message}` : "로그인했습니다.", error ? "err" : "ok");
-});
-$("btnUp").addEventListener("click", async () => {
-  const { data, error } = await db.auth.signUp({
-    email: $("email").value.trim(), password: $("pw").value,
-    options: { emailRedirectTo: location.origin + location.pathname }
-  });
-  if (error) return setStatus($("authStatus"), `가입 실패: ${error.message}`, "err");
-  setStatus($("authStatus"), data.session ? "가입과 로그인이 끝났습니다." : "확인 메일을 보냈습니다. 메일의 링크를 누른 뒤 로그인하세요.", "ok");
-});
-$("btnOut").addEventListener("click", async () => { await db.auth.signOut(); setStatus($("authStatus"), "로그아웃했습니다."); });
 
 // ---------- 저장 (insert → .select()로 새 행 받기) ----------
 form.addEventListener("submit", async e => {

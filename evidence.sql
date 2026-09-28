@@ -25,6 +25,6 @@ alter table public.evidence enable row level security;
 create policy "evidence_select_public"
   on public.evidence for select to anon, authenticated using (true);
 
--- 쓰기: 로그인한 팀원만
-create policy "evidence_insert_authenticated"
-  on public.evidence for insert to authenticated with check (true);
+-- 쓰기: 링크를 가진 누구나 (추가만 가능 · 수정·삭제 정책은 없으므로 거부됨)
+create policy "evidence_insert_public"
+  on public.evidence for insert to anon, authenticated with check (true);

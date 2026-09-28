@@ -28,3 +28,8 @@ create policy "evidence_select_public"
 -- 쓰기: 링크를 가진 누구나 (추가만 가능 · 수정·삭제 정책은 없으므로 거부됨)
 create policy "evidence_insert_public"
   on public.evidence for insert to anon, authenticated with check (true);
+
+-- 4) 검색 속도: 항목·출처 부분 일치 검색용 trigram 인덱스
+create extension if not exists pg_trgm with schema extensions;
+create index if not exists evidence_item_trgm   on public.evidence using gin (item   extensions.gin_trgm_ops);
+create index if not exists evidence_source_trgm on public.evidence using gin (source extensions.gin_trgm_ops);

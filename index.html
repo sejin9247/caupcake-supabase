@@ -10,24 +10,31 @@
     color-scheme: light;
     --bg: #f4f6fa; --surface: #ffffff; --surface-2: #eef2f8; --border: #d5deea;
     --text: #1d2330; --text-2: #52596a; --muted: #7a8292; --accent: #1c3d6e;
-    --series-1: #2a78d6; --err: #c1121f; --ok: #0f7a3d;
+    --series-1: #2a78d6; --series-2: #eb6834; --cap: #1d2330;
+    --err: #c1121f; --ok: #0f7a3d;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       color-scheme: dark;
       --bg: #121417; --surface: #1a1c20; --surface-2: #23262c; --border: #33373f;
       --text: #f2f3f5; --text-2: #c3c6cd; --muted: #8d93a0; --accent: #9dbdf0;
-      --series-1: #3987e5; --err: #ff6b6b; --ok: #4cc27e;
+      --series-1: #3987e5; --series-2: #d95926; --cap: #f2f3f5;
+      --err: #ff6b6b; --ok: #4cc27e;
     }
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif; }
-  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 48px; }
+  main { max-width: 1080px; margin: 0 auto; padding: 20px 16px 48px; }
+  header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
   h1 { font-size: 22px; margin: 0 0 2px; color: var(--accent); }
-  h2 { font-size: 15px; margin: 0 0 10px; color: var(--accent); }
+  h2 { font-size: 15px; margin: 0; color: var(--accent); }
   .sub { color: var(--text-2); font-size: 12.5px; margin: 0 0 18px; }
+  .lang { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; flex: none; background: var(--surface); }
+  .lang button { font: inherit; font-size: 12.5px; border: 0; background: transparent; color: var(--text-2); padding: 5px 12px; cursor: pointer; }
+  .lang button[aria-pressed="true"] { background: var(--accent); color: var(--surface); font-weight: 600; }
   .box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
-  .grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+  .head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .grid2 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 14px; align-items: start; }
   .grid2 > .box { margin-bottom: 0; }
   .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
   .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
@@ -38,91 +45,126 @@
   label { display: flex; flex-direction: column; font-size: 12px; font-weight: 600; color: var(--accent); gap: 3px; }
   .wide { grid-column: 1 / -1; }
   input { font: inherit; color: var(--text); background: var(--surface); padding: 7px 9px; border: 1px solid var(--border); border-radius: 6px; min-width: 0; }
-  input:disabled { background: var(--surface-2); color: var(--muted); }
   .btn { font: inherit; padding: 7px 14px; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); border-radius: 6px; cursor: pointer; }
   .btn.ghost { background: transparent; color: var(--accent); }
   .btn:disabled { opacity: .5; cursor: not-allowed; }
   .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .seg button { font: inherit; font-size: 12px; border: 0; background: var(--surface); color: var(--text-2); padding: 5px 10px; cursor: pointer; }
+  .seg button + button { border-left: 1px solid var(--border); }
+  .seg button[aria-pressed="true"] { background: var(--surface-2); color: var(--text); font-weight: 600; }
   .status { font-size: 12px; color: var(--text-2); min-height: 1.2em; margin-top: 6px; }
   .status.err { color: var(--err); }
   .status.ok { color: var(--ok); }
-  .who { font-size: 13px; }
-  .note { font-size: 11.5px; color: var(--muted); margin-top: 8px; }
+  .note { font-size: 11.5px; color: var(--muted); margin: 8px 0 0; }
   /* chart */
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--text-2); margin-bottom: 8px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+  .legend i.cap { width: 2px; height: 12px; background: var(--cap); border-radius: 0; vertical-align: -2px; }
   .chart { position: relative; }
-  .bar-row { display: grid; grid-template-columns: 120px minmax(0, 1fr) 52px; align-items: center; gap: 8px; height: 22px; }
-  .bar-row + .bar-row { margin-top: 2px; }
-  .bar-label { font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .bar-track { position: relative; height: 100%; display: flex; align-items: center; }
-  .bar { height: 14px; background: var(--series-1); border-radius: 0 4px 4px 0; min-width: 2px; }
-  .bar-row:hover .bar, .bar-row:focus .bar { filter: brightness(1.15); }
-  .bar-row:hover .bar-label { color: var(--text); }
-  .bar-val { font-size: 12px; color: var(--text); text-align: right; font-variant-numeric: tabular-nums; }
-  .tip { position: absolute; pointer-events: none; background: var(--text); color: var(--bg); font-size: 12px; padding: 6px 8px; border-radius: 6px; max-width: 280px; opacity: 0; transition: opacity .1s; z-index: 5; }
+  .grp { display: grid; grid-template-columns: 150px minmax(0, 1fr); align-items: center; gap: 8px; padding: 3px 0; border-radius: 4px; outline: none; }
+  .grp:hover, .grp:focus-visible { background: var(--surface-2); }
+  .grp-label { font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 4px; }
+  .grp:hover .grp-label { color: var(--text); }
+  .bars { position: relative; display: flex; flex-direction: column; gap: 2px; }
+  .bar { height: 9px; border-radius: 0 4px 4px 0; min-width: 2px; }
+  .bar.s1 { background: var(--series-1); }
+  .bar.s2 { background: var(--series-2); }
+  .capmark { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--cap); }
+  .axis { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 8px; font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .axis div:last-child { display: flex; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 2px; }
+  .tip { position: absolute; pointer-events: none; background: var(--text); color: var(--bg); font-size: 12px; padding: 7px 9px; border-radius: 6px; width: 250px; opacity: 0; transition: opacity .1s; z-index: 5; }
+  .tip .r { display: flex; justify-content: space-between; gap: 10px; }
+  .tip .r span:last-child { font-variant-numeric: tabular-nums; font-weight: 600; }
   /* table */
-  .tbl-wrap { overflow-x: auto; }
+  .tbl-wrap { overflow: auto; max-height: 520px; }
   table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
   th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
-  th { color: var(--text-2); font-weight: 600; background: var(--surface-2); position: sticky; top: 0; }
+  th { color: var(--text-2); font-weight: 600; background: var(--surface-2); position: sticky; top: 0; z-index: 1; }
   td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  td.src { color: var(--text-2); min-width: 260px; }
+  td.src { color: var(--text-2); min-width: 280px; }
   td.date { white-space: nowrap; }
+  mark { background: color-mix(in srgb, var(--series-2) 30%, transparent); color: inherit; border-radius: 2px; }
   tr.new td { background: color-mix(in srgb, var(--series-1) 12%, transparent); }
-  .scroll { max-height: 460px; overflow-y: auto; }
-  @media (max-width: 760px) {
+  @media (max-width: 820px) {
     .grid2 { grid-template-columns: 1fr; }
     .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     form.f { grid-template-columns: 1fr; }
-    .bar-row { grid-template-columns: 96px minmax(0, 1fr) 46px; }
+    .grp, .axis { grid-template-columns: 96px minmax(0, 1fr); }
   }
 </style>
 </head>
 <body>
 <main>
-  <h1>근거노트 대시보드</h1>
-  <p class="sub">Team LUOGO · 대상지 상명대학교 천안캠퍼스 · Supabase <code>evidence</code> 표에서 불러온 값만 그립니다 (화면 변수가 아니라 서버의 행)</p>
+  <header>
+    <div>
+      <h1 data-i18n="title">근거노트 대시보드</h1>
+      <p class="sub" data-i18n="sub">Team LUOGO · 대상지 상명대학교 천안캠퍼스 · Supabase evidence 표에서 불러온 값만 그립니다 (화면 변수가 아니라 서버의 행)</p>
+    </div>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-lang="ko" aria-pressed="true">한국어</button>
+      <button type="button" data-lang="it" aria-pressed="false">Italiano</button>
+    </div>
+  </header>
 
   <div class="tiles">
-    <div class="tile"><div class="k">저장된 근거 행</div><div class="v" id="tRows">–</div><div class="n">evidence 표 전체</div></div>
-    <div class="tile"><div class="k">출처 조문 수</div><div class="v" id="tSrc">–</div><div class="n">서로 다른 source</div></div>
-    <div class="tile"><div class="k">가장 최근 조회일</div><div class="v" id="tNew">–</div><div class="n">queried_on 최댓값</div></div>
-    <div class="tile"><div class="k">가장 오래된 조회일</div><div class="v" id="tOld">–</div><div class="n">재조회 대상 후보</div></div>
+    <div class="tile"><div class="k" data-i18n="kRows">저장된 근거 행</div><div class="v" id="tRows">–</div><div class="n" data-i18n="nRows">evidence 표 전체</div></div>
+    <div class="tile"><div class="k" data-i18n="kSrc">출처 종류</div><div class="v" id="tSrc">–</div><div class="n" id="tSrcN"></div></div>
+    <div class="tile"><div class="k" data-i18n="kNew">가장 최근 조회일</div><div class="v" id="tNew">–</div><div class="n" data-i18n="nNew">queried_on 최댓값</div></div>
+    <div class="tile"><div class="k" data-i18n="kOld">가장 오래된 조회일</div><div class="v" id="tOld">–</div><div class="n" data-i18n="nOld">재조회 대상 후보</div></div>
   </div>
 
   <div class="grid2">
     <section class="box">
-      <h2>천안시 용도지역별 용적률 상한 (조례)</h2>
-      <div class="chart" id="chart"><div class="status">불러오는 중…</div></div>
+      <div class="head">
+        <h2 id="chartTitle"></h2>
+        <div class="seg" role="group">
+          <button type="button" data-metric="용적률" aria-pressed="true" data-i18n="far">용적률</button>
+          <button type="button" data-metric="건폐율" aria-pressed="false" data-i18n="bcr">건폐율</button>
+        </div>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--series-1)"></i><span data-i18n="rCheonan">천안시 조례</span></span>
+        <span><i style="background:var(--series-2)"></i><span data-i18n="rHwaseong">화성시 조례</span></span>
+        <span><i class="cap"></i><span data-i18n="rCap">국토계획법 시행령 상한</span></span>
+      </div>
+      <div class="chart" id="chart"><div class="status" data-i18n="loading">불러오는 중…</div></div>
+      <div class="axis" id="axis"></div>
       <div class="tip" id="tip" role="tooltip"></div>
-      <p class="note">단위 % · 「천안시 도시계획 조례」 제61조 · value 열이 numeric 이라 큰 순서 정렬과 평균이 가능함</p>
+      <p class="note" data-i18n="chartNote">단위 % · 막대가 세로선(법정 상한)을 넘으면 조례가 상위법을 어긴 것 · value 열이 numeric 이라 비교·정렬 가능</p>
     </section>
 
     <section class="box">
-      <h2>새 근거값 저장</h2>
-      <p class="note" style="margin:0 0 10px">네 칸(값·단위·출처·조회일)을 모두 채워야 저장됨 · 빈 값·5자 미만 출처·미래 조회일은 서버가 거부</p>
+      <div class="head"><h2 data-i18n="formTitle">새 근거값 저장</h2></div>
+      <p class="note" style="margin:0 0 10px" data-i18n="formNote">네 칸(값·단위·출처·조회일)을 모두 채워야 저장됨 · 빈 값·5자 미만 출처·미래 조회일은 서버가 거부</p>
       <form class="f" id="f">
-        <label class="wide">항목 (item) <input name="item" required maxlength="100" placeholder="대상지 용도지역 현황 · 상명대 천안캠퍼스"></label>
-        <label>값 (value, 숫자만) <input name="value" type="number" step="any" required placeholder="1"></label>
-        <label>단위 (unit) <input name="unit" required maxlength="30" placeholder="개 / % / ㎡ / 회"></label>
-        <label class="wide">출처 (source) <input name="source" required minlength="5" maxlength="300" placeholder="토지이음 토지이용계획 열람 · 천안시 동남구 ○○동 ○○번지 · 1차/2차자료"></label>
-        <label>조회일 (queried_on) <input name="queried_on" type="date" required></label>
-        <div class="wide"><button class="btn" type="submit" id="btnSave">저장</button><div class="status" id="formStatus"></div></div>
+        <label class="wide"><span data-i18n="fItem">항목 (item)</span><input name="item" required maxlength="100" data-i18n-ph="phItem" placeholder="대상지 용도지역 현황 · 상명대 천안캠퍼스"></label>
+        <label><span data-i18n="fValue">값 (value, 숫자만)</span><input name="value" type="number" step="any" required placeholder="1"></label>
+        <label><span data-i18n="fUnit">단위 (unit)</span><input name="unit" required maxlength="30" data-i18n-ph="phUnit" placeholder="개 / % / ㎡ / 회"></label>
+        <label class="wide"><span data-i18n="fSource">출처 (source)</span><input name="source" required minlength="5" maxlength="300" data-i18n-ph="phSource" placeholder="토지이음 토지이용계획 열람 · 천안시 동남구 ○○동 ○○번지 · 1차/2차자료"></label>
+        <label><span data-i18n="fDate">조회일 (queried_on)</span><input name="queried_on" type="date" required></label>
+        <div class="wide"><button class="btn" type="submit" id="btnSave" data-i18n="save">저장</button><div class="status" id="formStatus"></div></div>
       </form>
     </section>
   </div>
 
   <section class="box" style="margin-top:14px">
-    <div class="row" style="justify-content:space-between;margin-bottom:8px">
-      <h2 style="margin:0">저장된 근거 행 <span id="listCount" style="color:var(--text-2);font-weight:400"></span></h2>
+    <div class="head">
+      <h2><span data-i18n="listTitle">근거 행 검색</span> <span id="listCount" style="color:var(--text-2);font-weight:400"></span></h2>
       <div class="row">
-        <input id="q" type="search" placeholder="항목·출처 검색" style="width:200px">
-        <button class="btn ghost" id="btnReload" type="button">서버에서 다시 읽기</button>
+        <div class="seg" role="group" id="regionSeg">
+          <button type="button" data-region="" aria-pressed="true" data-i18n="rAll">전체</button>
+          <button type="button" data-region="천안시" aria-pressed="false" data-i18n="rCheonanS">천안시</button>
+          <button type="button" data-region="화성시" aria-pressed="false" data-i18n="rHwaseongS">화성시</button>
+          <button type="button" data-region="국토의 계획" aria-pressed="false" data-i18n="rCapS">시행령</button>
+        </div>
+        <input id="q" type="search" data-i18n-ph="phSearch" placeholder="항목·출처 검색 (예: 상업, 제61조)" style="width:220px">
       </div>
     </div>
     <div class="status" id="listStatus"></div>
-    <div class="tbl-wrap scroll">
+    <div class="tbl-wrap">
       <table>
-        <thead><tr><th>id</th><th>항목</th><th style="text-align:right">값</th><th>단위</th><th>출처</th><th>조회일</th><th>저장 시각</th></tr></thead>
+        <thead><tr><th>id</th><th data-i18n="cItem">항목</th><th style="text-align:right" data-i18n="cValue">값</th><th data-i18n="cUnit">단위</th><th data-i18n="cSource">출처</th><th data-i18n="cDate">조회일</th></tr></thead>
         <tbody id="tbody"></tbody>
       </table>
     </div>
@@ -134,104 +176,234 @@ const SUPABASE_URL = "https://dwlrjyditdednagjfnpo.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_hx9UHAzdDHLVJwTmsBM-zQ_VKp5h_6A";
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
+// ---------- 번역 ----------
+const I18N = {
+  ko: {
+    title: "근거노트 대시보드",
+    sub: "Team LUOGO · 대상지 상명대학교 천안캠퍼스 · Supabase evidence 표에서 불러온 값만 그립니다 (화면 변수가 아니라 서버의 행)",
+    kRows: "저장된 근거 행", nRows: "evidence 표 전체", kSrc: "출처 종류", kNew: "가장 최근 조회일", nNew: "queried_on 최댓값",
+    kOld: "가장 오래된 조회일", nOld: "재조회 대상 후보",
+    far: "용적률", bcr: "건폐율", chartTitle: m => `용도지역별 ${m} — 조례와 법정 상한`,
+    rCheonan: "천안시 조례", rHwaseong: "화성시 조례", rCap: "국토계획법 시행령 상한",
+    loading: "불러오는 중…",
+    chartNote: "단위 % · 막대가 세로선(법정 상한)을 넘으면 조례가 상위법을 어긴 것 · value 열이 numeric 이라 비교·정렬 가능",
+    formTitle: "새 근거값 저장", formNote: "네 칸(값·단위·출처·조회일)을 모두 채워야 저장됨 · 빈 값·5자 미만 출처·미래 조회일은 서버가 거부",
+    fItem: "항목 (item)", fValue: "값 (value, 숫자만)", fUnit: "단위 (unit)", fSource: "출처 (source)", fDate: "조회일 (queried_on)", save: "저장",
+    phItem: "대상지 용도지역 현황 · 상명대 천안캠퍼스", phUnit: "개 / % / ㎡ / 회", phSource: "토지이음 토지이용계획 열람 · 천안시 동남구 ○○동 ○○번지 · 1차/2차자료",
+    listTitle: "근거 행 검색", rAll: "전체", rCheonanS: "천안시", rHwaseongS: "화성시", rCapS: "시행령",
+    phSearch: "항목·출처 검색 (예: 상업, 제61조)",
+    cItem: "항목", cValue: "값", cUnit: "단위", cSource: "출처", cDate: "조회일",
+    srcN: n => `천안·화성·시행령 등 ${n}종`,
+    searching: "서버에서 검색 중…", found: (n, ms) => `서버 응답 ${n}행 · ${ms} ms`, empty: "조건에 맞는 행이 없습니다.",
+    loadFail: m => `불러오기 실패: ${m}`, saving: "저장 중…", saveFail: m => `저장 실패: ${m}`,
+    saved: (id, t) => `저장됨 · id ${id} · ${t} — 새로고침해도 목록에 남아 있어야 합니다.`,
+    need4: "네 칸(값·단위·출처·조회일)을 모두 채워야 합니다.",
+    tipCap: "법정 상한", noRows: "비교할 행이 없습니다.",
+  },
+  it: {
+    title: "Dashboard delle note di evidenza",
+    sub: "Team LUOGO · Area di progetto: Campus di Cheonan dell'Università Sangmyung · Mostra solo i valori letti dalla tabella evidence di Supabase (righe del server, non variabili dello schermo)",
+    kRows: "Righe salvate", nRows: "Intera tabella evidence", kSrc: "Tipi di fonte", kNew: "Consultazione più recente", nNew: "Massimo di queried_on",
+    kOld: "Consultazione più vecchia", nOld: "Da riverificare",
+    far: "Indice di edificabilità", bcr: "Rapporto di copertura",
+    chartTitle: m => `${m} per zona d'uso — regolamenti e limite di legge`,
+    rCheonan: "Regolamento di Cheonan", rHwaseong: "Regolamento di Hwaseong", rCap: "Limite del Decreto attuativo nazionale",
+    loading: "Caricamento…",
+    chartNote: "Unità % · Se una barra supera la linea verticale (limite di legge), il regolamento viola la norma superiore · la colonna value è numerica, quindi confrontabile e ordinabile",
+    formTitle: "Salva un nuovo valore", formNote: "Tutti e quattro i campi (valore, unità, fonte, data) sono obbligatori · il server rifiuta valori vuoti, fonti sotto 5 caratteri e date future",
+    fItem: "Voce (item)", fValue: "Valore (value, solo numeri)", fUnit: "Unità (unit)", fSource: "Fonte (source)", fDate: "Data di consultazione (queried_on)", save: "Salva",
+    phItem: "Zona d'uso attuale · Campus Sangmyung di Cheonan", phUnit: "n. / % / m² / volte", phSource: "Portale Toji-eum · indirizzo della particella · fonte primaria/secondaria",
+    listTitle: "Cerca righe", rAll: "Tutte", rCheonanS: "Cheonan", rHwaseongS: "Hwaseong", rCapS: "Decreto",
+    phSearch: "Cerca voce o fonte (es. 상업, 제61조)",
+    cItem: "Voce", cValue: "Valore", cUnit: "Unità", cSource: "Fonte", cDate: "Consultato il",
+    srcN: n => `${n} tipi: Cheonan, Hwaseong, Decreto…`,
+    searching: "Ricerca sul server…", found: (n, ms) => `Risposta del server: ${n} righe · ${ms} ms`, empty: "Nessuna riga corrisponde.",
+    loadFail: m => `Caricamento non riuscito: ${m}`, saving: "Salvataggio…", saveFail: m => `Salvataggio non riuscito: ${m}`,
+    saved: (id, t) => `Salvato · id ${id} · ${t} — deve restare nell'elenco anche dopo il ricaricamento.`,
+    need4: "Compila tutti e quattro i campi (valore, unità, fonte, data).",
+    tipCap: "Limite di legge", noRows: "Nessuna riga da confrontare.",
+  },
+};
+const ZONE_IT = {
+  "제1종전용주거지역": "Resid. esclusiva 1ª cl.", "제2종전용주거지역": "Resid. esclusiva 2ª cl.",
+  "제1종일반주거지역": "Resid. generale 1ª cl.", "제2종일반주거지역": "Resid. generale 2ª cl.",
+  "제3종일반주거지역": "Resid. generale 3ª cl.", "준주거지역": "Semi-residenziale",
+  "중심상업지역": "Commerciale centrale", "일반상업지역": "Commerciale generale", "근린상업지역": "Commerciale di vicinato",
+  "유통상업지역": "Commerciale distributiva", "전용공업지역": "Industriale esclusiva", "일반공업지역": "Industriale generale",
+  "준공업지역": "Semi-industriale", "보전녹지지역": "Verde di conservazione", "생산녹지지역": "Verde produttiva",
+  "자연녹지지역": "Verde naturale", "보전관리지역": "Gestione conservativa", "생산관리지역": "Gestione produttiva",
+  "계획관리지역": "Gestione pianificata", "농림지역": "Agricola e forestale", "자연환경보전지역": "Tutela ambientale",
+};
+const SRC_IT = [
+  [/국토의 계획 및 이용에 관한 법률 시행령/g, "Decreto attuativo della Legge sulla pianificazione e l'uso del territorio nazionale"],
+  [/천안시 도시계획 조례/g, "Regolamento urbanistico della città di Cheonan"],
+  [/화성시 도시계획 조례/g, "Regolamento urbanistico della città di Hwaseong"],
+  [/제(\d+)조/g, "art. $1"], [/제(\d+)항/g, " c. $1"], [/제(\d+)호/g, " n. $1"],
+  [/범위 ([\d~]+) 중 상한/g, "limite superiore dell'intervallo $1"], [/상한/g, "limite superiore"],
+  [/자치법규ID\/일련번호/g, "ID regolamento / n. serie"], [/시행 /g, "in vigore dal "],
+  [/2차자료/g, "fonte secondaria"], [/1차자료/g, "fonte primaria"], [/국가법령정보/g, "Centro nazionale di informazione legislativa"],
+  [/대조/g, "verificato"], [/(\S)\(/g, "$1 ("],
+];
+let lang = "ko";
+try { const s = localStorage.getItem("lang"); if (s === "it" || s === "ko") lang = s; } catch {}
+const T = () => I18N[lang];
+const metricName = m => m === "용적률" ? T().far : T().bcr;
+function tItem(item) {
+  if (lang === "ko") return item;
+  const m = item.match(/^(\S+) (용적률|건폐율)$/);
+  return m && ZONE_IT[m[1]] ? `${ZONE_IT[m[1]]} · ${metricName(m[2])}` : item;
+}
+const tZone = z => lang === "ko" ? z : (ZONE_IT[z] || z);
+const tSource = s => lang === "ko" ? s : SRC_IT.reduce((acc, [re, to]) => acc.replace(re, to), s);
+
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.title = T().title;
+  document.querySelectorAll("[data-i18n]").forEach(el => { const v = T()[el.dataset.i18n]; if (typeof v === "string") el.textContent = v; });
+  document.querySelectorAll("[data-i18n-ph]").forEach(el => el.placeholder = T()[el.dataset.i18nPh]);
+  document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", b.dataset.lang === lang));
+  renderAll(); renderTable(lastResult);
+}
+document.querySelectorAll(".lang button").forEach(b => b.addEventListener("click", () => {
+  lang = b.dataset.lang; try { localStorage.setItem("lang", lang); } catch {}
+  applyLang();
+}));
+
+// ---------- 공통 ----------
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-const fmt = n => Number(n).toLocaleString("ko-KR");
+const fmt = n => Number(n).toLocaleString(lang === "it" ? "it-IT" : "ko-KR");
 function setStatus(el, msg, kind = "") { el.textContent = msg; el.className = "status" + (kind ? " " + kind : ""); }
+const regionOf = s => s.startsWith("천안시") ? "cheonan" : s.startsWith("화성시") ? "hwaseong" : s.startsWith("국토의 계획") ? "cap" : "other";
 
 const form = $("f");
 const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-form.queried_on.value = today;
-form.queried_on.max = today;
+form.queried_on.value = today; form.queried_on.max = today;
 
-let rows = [], lastNewId = null;
+let all = [], metric = "용적률", lastNewId = null, lastResult = null;
 
-// ---------- 조회 (select) ----------
-async function load() {
-  setStatus($("listStatus"), "서버에서 불러오는 중…");
-  const { data, error } = await db.from("evidence")
-    .select("id, created_at, item, value, unit, source, queried_on")
-    .order("id", { ascending: false });
-  if (error) return setStatus($("listStatus"), `불러오기 실패: ${error.message}`, "err");
-  rows = data;
-  setStatus($("listStatus"), `서버 응답 ${data.length}행 · ${new Date().toLocaleTimeString("ko-KR")}`);
-  renderTiles(); renderChart(); renderTable();
+// ---------- 전체 조회 (요약·차트용) ----------
+async function loadAll() {
+  const { data, error } = await db.from("evidence").select("id, item, value, unit, source, queried_on").order("id");
+  if (error) return setStatus($("listStatus"), T().loadFail(error.message), "err");
+  all = data; renderAll();
+}
+function renderAll() {
+  if (!all.length) return;
+  $("tRows").textContent = fmt(all.length);
+  const kinds = new Set(all.map(r => regionOf(r.source) === "other" ? r.source : regionOf(r.source)));
+  $("tSrc").textContent = fmt(kinds.size); $("tSrcN").textContent = T().srcN(kinds.size);
+  const ds = all.map(r => r.queried_on).sort();
+  $("tNew").textContent = ds.at(-1).slice(5); $("tNew").title = ds.at(-1);
+  $("tOld").textContent = ds[0].slice(5); $("tOld").title = ds[0];
+  renderChart();
 }
 
-function renderTiles() {
-  $("tRows").textContent = fmt(rows.length);
-  $("tSrc").textContent = fmt(new Set(rows.map(r => r.source)).size);
-  const ds = rows.map(r => r.queried_on).sort();
-  $("tNew").textContent = ds.length ? ds[ds.length - 1].slice(5) : "–";
-  $("tOld").textContent = ds.length ? ds[0].slice(5) : "–";
-  $("tNew").title = ds[ds.length - 1] || ""; $("tOld").title = ds[0] || "";
-}
-
+// ---------- 차트: 조례 두 곳 + 법정 상한 ----------
 function renderChart() {
-  const far = rows.filter(r => r.item.endsWith("용적률") && r.unit === "%" && r.source.includes("천안시 도시계획 조례"));
-  // 같은 항목이 여럿이면 가장 최근 조회일 행만
-  const byItem = new Map();
-  for (const r of far) { const p = byItem.get(r.item); if (!p || r.queried_on > p.queried_on) byItem.set(r.item, r); }
-  const list = [...byItem.values()].sort((a, b) => b.value - a.value);
-  if (!list.length) return $("chart").innerHTML = `<div class="status">용적률 행이 없습니다.</div>`;
-  const max = Math.max(...list.map(r => +r.value));
-  $("chart").innerHTML = list.map(r => `
-    <div class="bar-row" tabindex="0" data-id="${r.id}">
-      <div class="bar-label">${esc(r.item.replace(/ 용적률$/, ""))}</div>
-      <div class="bar-track"><div class="bar" style="width:${(r.value / max * 100).toFixed(2)}%"></div></div>
-      <div class="bar-val">${fmt(r.value)}</div>
+  $("chartTitle").textContent = T().chartTitle(metricName(metric));
+  const zones = new Map();
+  for (const r of all) {
+    const m = r.item.match(/^(\S+) (용적률|건폐율)$/);
+    if (!m || m[2] !== metric || r.unit !== "%") continue;
+    const reg = regionOf(r.source); if (reg === "other") continue;
+    const z = zones.get(m[1]) || {}; const p = z[reg];
+    if (!p || r.queried_on > p.queried_on) z[reg] = r;
+    zones.set(m[1], z);
+  }
+  const list = [...zones.entries()].filter(([, z]) => z.cheonan || z.hwaseong)
+    .sort((a, b) => (b[1].cap?.value ?? 0) - (a[1].cap?.value ?? 0) || (b[1].cheonan?.value ?? 0) - (a[1].cheonan?.value ?? 0));
+  if (!list.length) { $("chart").innerHTML = `<div class="status">${T().noRows}</div>`; $("axis").innerHTML = ""; return; }
+  const max = Math.max(...list.flatMap(([, z]) => [z.cheonan, z.hwaseong, z.cap].filter(Boolean).map(r => +r.value)));
+  const pct = v => (v / max * 100).toFixed(2) + "%";
+  $("chart").innerHTML = list.map(([zone, z], i) => `
+    <div class="grp" tabindex="0" data-i="${i}">
+      <div class="grp-label" title="${esc(tZone(zone))}">${esc(tZone(zone))}</div>
+      <div class="bars">
+        <div class="bar s1" style="width:${z.cheonan ? pct(z.cheonan.value) : 0}"></div>
+        <div class="bar s2" style="width:${z.hwaseong ? pct(z.hwaseong.value) : 0}"></div>
+        ${z.cap ? `<div class="capmark" style="left:calc(${pct(z.cap.value)} - 1px)"></div>` : ""}
+      </div>
     </div>`).join("");
+  $("axis").innerHTML = `<div></div><div><span>0</span><span>${fmt(Math.round(max / 2))}</span><span>${fmt(max)} %</span></div>`;
   const tip = $("tip"), box = $("chart").parentElement;
-  $("chart").querySelectorAll(".bar-row").forEach(el => {
-    const r = list.find(x => String(x.id) === el.dataset.id);
+  $("chart").querySelectorAll(".grp").forEach(el => {
+    const [zone, z] = list[+el.dataset.i];
+    const line = (label, r) => `<div class="r"><span>${label}</span><span>${r ? fmt(r.value) + " %" : "–"}</span></div>`;
     const show = () => {
-      tip.innerHTML = `<b>${esc(r.item)}</b><br>${fmt(r.value)} ${esc(r.unit)}<br>${esc(r.source)}<br>조회일 ${esc(r.queried_on)}`;
+      tip.innerHTML = `<b>${esc(tZone(zone))}</b>${line(T().rCheonan, z.cheonan)}${line(T().rHwaseong, z.hwaseong)}${line(T().tipCap, z.cap)}`;
       const a = el.getBoundingClientRect(), b = box.getBoundingClientRect();
-      tip.style.left = Math.max(8, Math.min(a.left - b.left + 120, b.width - 290)) + "px";
-      tip.style.top = (a.bottom - b.top + 4) + "px";
-      tip.style.opacity = 1;
+      tip.style.left = Math.max(8, Math.min(a.left - b.left + 140, b.width - 258)) + "px";
+      tip.style.top = (a.bottom - b.top + 4) + "px"; tip.style.opacity = 1;
     };
+    const hide = () => tip.style.opacity = 0;
     el.addEventListener("mouseenter", show); el.addEventListener("focus", show);
-    el.addEventListener("mouseleave", () => tip.style.opacity = 0); el.addEventListener("blur", () => tip.style.opacity = 0);
+    el.addEventListener("mouseleave", hide); el.addEventListener("blur", hide);
   });
 }
+document.querySelectorAll("[data-metric]").forEach(b => b.addEventListener("click", () => {
+  metric = b.dataset.metric;
+  document.querySelectorAll("[data-metric]").forEach(x => x.setAttribute("aria-pressed", x === b));
+  renderChart();
+}));
 
-function renderTable() {
-  const q = $("q").value.trim();
-  const shown = q ? rows.filter(r => (r.item + " " + r.source).includes(q)) : rows;
-  $("listCount").textContent = q ? `${shown.length} / ${rows.length}행` : `${rows.length}행`;
-  $("tbody").innerHTML = shown.length ? shown.map(r => `
-    <tr class="${r.id === lastNewId ? "new" : ""}">
-      <td class="num">${r.id}</td><td>${esc(r.item)}</td><td class="num">${fmt(r.value)}</td><td>${esc(r.unit)}</td>
-      <td class="src">${esc(r.source)}</td><td class="date">${esc(r.queried_on)}</td>
-      <td class="date">${new Date(r.created_at).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short" })}</td>
-    </tr>`).join("") : `<tr><td colspan="7" style="color:var(--muted)">표시할 행이 없습니다.</td></tr>`;
+// ---------- 검색: 입력할 때마다 Supabase API로 서버 검색 ----------
+let region = "", seq = 0, timer = null;
+async function search() {
+  const my = ++seq;
+  const q = $("q").value.trim().replace(/[,()*%\\"]/g, " ").trim();
+  setStatus($("listStatus"), T().searching);
+  const t0 = performance.now();
+  let req = db.from("evidence").select("id, item, value, unit, source, queried_on").order("id", { ascending: false }).limit(300);
+  if (region) req = req.ilike("source", `${region}%`);
+  if (q) req = req.or(`item.ilike.*${q}*,source.ilike.*${q}*`);
+  const { data, error } = await req;
+  if (my !== seq) return;                       // 늦게 도착한 옛 응답은 버림
+  if (error) return setStatus($("listStatus"), T().loadFail(error.message), "err");
+  setStatus($("listStatus"), T().found(data.length, Math.round(performance.now() - t0)));
+  renderTable({ rows: data, q });
 }
-$("q").addEventListener("input", renderTable);
-$("btnReload").addEventListener("click", load);
+function hl(text, q) {
+  const s = esc(text); if (!q) return s;
+  const e = esc(q).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return s.replace(new RegExp(e, "gi"), m => `<mark>${m}</mark>`);
+}
+function renderTable(res) {
+  lastResult = res; if (!res) return;
+  const { rows, q } = res;
+  $("listCount").textContent = `${fmt(rows.length)} / ${fmt(all.length || rows.length)}`;
+  $("tbody").innerHTML = rows.length ? rows.map(r => `
+    <tr class="${r.id === lastNewId ? "new" : ""}">
+      <td class="num">${r.id}</td><td>${hl(tItem(r.item), q)}</td><td class="num">${fmt(r.value)}</td><td>${esc(r.unit)}</td>
+      <td class="src">${hl(tSource(r.source), q)}</td><td class="date">${esc(r.queried_on)}</td>
+    </tr>`).join("") : `<tr><td colspan="6" style="color:var(--muted)">${T().empty}</td></tr>`;
+}
+$("q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(search, 200); });
+document.querySelectorAll("[data-region]").forEach(b => b.addEventListener("click", () => {
+  region = b.dataset.region;
+  document.querySelectorAll("[data-region]").forEach(x => x.setAttribute("aria-pressed", x === b));
+  search();
+}));
 
 // ---------- 저장 (insert → .select()로 새 행 받기) ----------
 form.addEventListener("submit", async e => {
   e.preventDefault();
   const fd = new FormData(form);
-  const row = {
-    item: fd.get("item").trim(), value: Number(fd.get("value")), unit: fd.get("unit").trim(),
-    source: fd.get("source").trim(), queried_on: fd.get("queried_on"),
-  };
+  const row = { item: fd.get("item").trim(), value: Number(fd.get("value")), unit: fd.get("unit").trim(),
+                source: fd.get("source").trim(), queried_on: fd.get("queried_on") };
   if (!row.item || !row.unit || row.source.length < 5 || !Number.isFinite(row.value))
-    return setStatus($("formStatus"), "네 칸(값·단위·출처·조회일)을 모두 채워야 합니다.", "err");
-  $("btnSave").disabled = true;
-  setStatus($("formStatus"), "저장 중…");
+    return setStatus($("formStatus"), T().need4, "err");
+  $("btnSave").disabled = true; setStatus($("formStatus"), T().saving);
   const { data, error } = await db.from("evidence").insert(row).select("id, created_at").single();
   $("btnSave").disabled = false;
-  if (error) return setStatus($("formStatus"), `저장 실패: ${error.message}`, "err");
+  if (error) return setStatus($("formStatus"), T().saveFail(error.message), "err");
   lastNewId = data.id;
-  setStatus($("formStatus"), `저장됨 · id ${data.id} · ${new Date(data.created_at).toLocaleString("ko-KR")} — 새로고침해도 목록에 남아 있어야 합니다.`, "ok");
+  setStatus($("formStatus"), T().saved(data.id, new Date(data.created_at).toLocaleString(lang === "it" ? "it-IT" : "ko-KR")), "ok");
   form.reset(); form.queried_on.value = today;
-  load();
+  await loadAll(); search();
 });
 
-load();
+applyLang(); loadAll(); search();
 </script>
 </body>
 </html>

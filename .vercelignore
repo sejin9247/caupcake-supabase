@@ -1,2 +1,6 @@
 .env*
 .vercel
+.claude
+scripts
+skills-lock.json
+DESIGN.md
